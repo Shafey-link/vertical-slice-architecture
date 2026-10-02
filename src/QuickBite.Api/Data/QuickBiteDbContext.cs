@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using QuickBite.Api.Domain;
 using QuickBite.Api.Entities;
 
 namespace QuickBite.Api.Data;

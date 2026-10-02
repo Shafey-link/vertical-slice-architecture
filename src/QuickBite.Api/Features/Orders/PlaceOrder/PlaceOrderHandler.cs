@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using QuickBite.Api.Data;
+using QuickBite.Api.Domain;
 using QuickBite.Api.Entities;
 
 namespace QuickBite.Api.Features.Orders.PlaceOrder;
@@ -50,6 +51,8 @@ public class PlaceOrderHandler
         await _payment.Process(price.Total);
 
         var order = CreateOrder(request, menuItems, price);
+
+        order.Confirm();
 
         _db.Orders.Add(order);
 
@@ -119,27 +122,16 @@ public class PlaceOrderHandler
         List<MenuItem> menuItems,
         OrderPrice price)
     {
-        var order = new Order
-        {
-            Id = Guid.NewGuid(),
-            CustomerId = request.CustomerId,
-            RestaurantId = request.RestaurantId,
-            CreatedAt = DateTime.UtcNow,
-            TotalAmount = price.Total
-        };
+        var order = new Order(
+            request.CustomerId,
+            request.RestaurantId,
+            price.Total);
 
         foreach (var item in request.Items)
         {
             var menuItem = menuItems.Single(x => x.Id == item.MenuItemId);
 
-            order.Items.Add(new OrderItem
-            {
-                Id = Guid.NewGuid(),
-                OrderId = order.Id,
-                MenuItemId = item.MenuItemId,
-                Quantity = item.Quantity,
-                UnitPrice = menuItem.Price
-            });
+            order.AddItem(item.MenuItemId, item.Quantity, menuItem.Price);
         }
 
         return order;
