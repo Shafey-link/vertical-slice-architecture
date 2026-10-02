@@ -8,6 +8,9 @@ builder.Services.AddDbContext<QuickBiteDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuickBite")));
 
 builder.Services.AddScoped<PlaceOrderValidator>();
+builder.Services.AddScoped<OrderPricing>();
+builder.Services.AddScoped<PaymentProcessor>();
+builder.Services.AddScoped<OrderNotification>();
 builder.Services.AddScoped<PlaceOrderHandler>();
 
 var app = builder.Build();

@@ -8,34 +8,88 @@ public class PlaceOrderHandler
 {
     private readonly QuickBiteDbContext _db;
     private readonly PlaceOrderValidator _validator;
+    private readonly OrderPricing _pricing;
+    private readonly PaymentProcessor _payment;
+    private readonly OrderNotification _notification;
 
-    public PlaceOrderHandler(QuickBiteDbContext db, PlaceOrderValidator validator)
+    public PlaceOrderHandler(
+        QuickBiteDbContext db,
+        PlaceOrderValidator validator,
+        OrderPricing pricing,
+        PaymentProcessor payment,
+        OrderNotification notification)
     {
         _db = db;
         _validator = validator;
+        _pricing = pricing;
+        _payment = payment;
+        _notification = notification;
     }
 
     public async Task<PlaceOrderResponse> Handle(PlaceOrderRequest request)
     {
         _validator.Validate(request);
 
+        var restaurant = await GetRestaurant(request.RestaurantId);
+
+        ValidateRestaurant(restaurant);
+
+        var menuItems = await GetMenuItems(request);
+
+        ValidateItems(request, menuItems);
+
+        var subtotal = CalculateSubtotal(request, menuItems);
+
+        var discount = 0m;
+
+        if (string.Equals(request.CouponCode, "SAVE10", StringComparison.OrdinalIgnoreCase))
+            discount = subtotal * 0.10m;
+
+        var price = _pricing.Calculate(subtotal, discount, 30m);
+
+        await _payment.Process(price.Total);
+
+        var order = CreateOrder(request, menuItems, price);
+
+        _db.Orders.Add(order);
+
+        await _db.SaveChangesAsync();
+
+        await _notification.Send(order.Id);
+
+        return new PlaceOrderResponse(order.Id);
+    }
+
+    private async Task<Restaurant> GetRestaurant(Guid restaurantId)
+    {
         var restaurant = await _db.Restaurants
-            .SingleOrDefaultAsync(x => x.Id == request.RestaurantId);
+            .SingleOrDefaultAsync(x => x.Id == restaurantId);
 
         if (restaurant is null)
             throw new InvalidOperationException("Restaurant not found.");
 
+        return restaurant;
+    }
+
+    private static void ValidateRestaurant(Restaurant restaurant)
+    {
         if (!restaurant.IsOpen)
             throw new InvalidOperationException("Restaurant is closed.");
+    }
 
+    private async Task<List<MenuItem>> GetMenuItems(PlaceOrderRequest request)
+    {
         var menuItemIds = request.Items
             .Select(x => x.MenuItemId)
             .ToList();
 
-        var menuItems = await _db.MenuItems
+        return await _db.MenuItems
             .Where(x => menuItemIds.Contains(x.Id))
             .ToListAsync();
+    }
 
+    private static void ValidateItems(PlaceOrderRequest request, List<MenuItem> menuItems)
+    {
         foreach (var item in request.Items)
         {
             var menuItem = menuItems.SingleOrDefault(x => x.Id == item.MenuItemId);
@@ -49,33 +103,29 @@ public class PlaceOrderHandler
             if (menuItem.RestaurantId != request.RestaurantId)
                 throw new InvalidOperationException($"{menuItem.Name} is not on this restaurant's menu.");
         }
+    }
 
-        var subtotal = request.Items.Sum(item =>
+    private static decimal CalculateSubtotal(PlaceOrderRequest request, List<MenuItem> menuItems)
+    {
+        return request.Items.Sum(item =>
         {
             var menuItem = menuItems.Single(x => x.Id == item.MenuItemId);
             return menuItem.Price * item.Quantity;
         });
+    }
 
-        var discount = 0m;
-
-        if (string.Equals(request.CouponCode, "SAVE10", StringComparison.OrdinalIgnoreCase))
-            discount = subtotal * 0.10m;
-
-        var tax = (subtotal - discount) * 0.14m;
-
-        var deliveryFee = 30m;
-
-        var total = subtotal - discount + tax + deliveryFee;
-
-        Console.WriteLine($"Payment processed: {total}");
-
+    private static Order CreateOrder(
+        PlaceOrderRequest request,
+        List<MenuItem> menuItems,
+        OrderPrice price)
+    {
         var order = new Order
         {
             Id = Guid.NewGuid(),
             CustomerId = request.CustomerId,
             RestaurantId = request.RestaurantId,
             CreatedAt = DateTime.UtcNow,
-            TotalAmount = total
+            TotalAmount = price.Total
         };
 
         foreach (var item in request.Items)
@@ -92,12 +142,6 @@ public class PlaceOrderHandler
             });
         }
 
-        _db.Orders.Add(order);
-
-        await _db.SaveChangesAsync();
-
-        Console.WriteLine($"Order notification sent: {order.Id}");
-
-        return new PlaceOrderResponse(order.Id);
+        return order;
     }
 }
