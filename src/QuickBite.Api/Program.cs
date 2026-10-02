@@ -1,17 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using QuickBite.Api.Data;
 using QuickBite.Api.Features.Orders.PlaceOrder;
-using QuickBite.Api.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
-
-builder.Services.AddControllers();
 
 builder.Services.AddDbContext<QuickBiteDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuickBite")));
 
-builder.Services.AddScoped<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddScoped<PlaceOrderHandler>();
 
 var app = builder.Build();
 
@@ -22,6 +18,6 @@ using (var scope = app.Services.CreateScope())
     db.Database.EnsureCreated();
 }
 
-app.MapControllers();
+app.MapPlaceOrder();
 
 app.Run();
