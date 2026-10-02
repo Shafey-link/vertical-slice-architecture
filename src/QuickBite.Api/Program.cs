@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using QuickBite.Api.Data;
+using QuickBite.Api.Features.Orders.PlaceOrder;
 using QuickBite.Api.Repositories;
-using QuickBite.Api.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 

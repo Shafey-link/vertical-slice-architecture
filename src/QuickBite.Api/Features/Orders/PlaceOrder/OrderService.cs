@@ -1,7 +1,7 @@
 using QuickBite.Api.Entities;
 using QuickBite.Api.Repositories;
 
-namespace QuickBite.Api.Services;
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
 
 public class OrderService : IOrderService
 {

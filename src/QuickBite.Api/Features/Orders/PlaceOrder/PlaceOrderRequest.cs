@@ -1,4 +1,4 @@
-namespace QuickBite.Api.Services;
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
 
 public record PlaceOrderRequest(
     Guid CustomerId,
@@ -11,8 +11,3 @@ public record PlaceOrderItemRequest(
     decimal UnitPrice);
 
 public record PlaceOrderResponse(Guid OrderId);
-
-public interface IOrderService
-{
-    Task<PlaceOrderResponse> PlaceOrder(PlaceOrderRequest request);
-}

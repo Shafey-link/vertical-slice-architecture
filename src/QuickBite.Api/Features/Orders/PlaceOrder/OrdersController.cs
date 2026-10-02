@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using QuickBite.Api.Services;
 
-namespace QuickBite.Api.Controllers;
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
 
 [ApiController]
 [Route("api/orders")]
