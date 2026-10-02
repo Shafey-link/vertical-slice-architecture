@@ -6,14 +6,18 @@ namespace QuickBite.Api.Features.Orders.PlaceOrder;
 public class PlaceOrderHandler
 {
     private readonly QuickBiteDbContext _db;
+    private readonly PlaceOrderValidator _validator;
 
-    public PlaceOrderHandler(QuickBiteDbContext db)
+    public PlaceOrderHandler(QuickBiteDbContext db, PlaceOrderValidator validator)
     {
         _db = db;
+        _validator = validator;
     }
 
     public async Task<PlaceOrderResponse> Handle(PlaceOrderRequest request)
     {
+        _validator.Validate(request);
+
         var order = new Order
         {
             Id = Guid.NewGuid(),

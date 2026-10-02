@@ -7,6 +7,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddDbContext<QuickBiteDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("QuickBite")));
 
+builder.Services.AddScoped<PlaceOrderValidator>();
 builder.Services.AddScoped<PlaceOrderHandler>();
 
 var app = builder.Build();
