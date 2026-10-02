@@ -1,14 +1,23 @@
+using QuickBite.Api.Shared.Payments;
+
 namespace QuickBite.Api.Features.Orders.PlaceOrder;
 
 public class OrderPricing
 {
+    private readonly PaymentCalculator _calculator;
+
+    public OrderPricing(PaymentCalculator calculator)
+    {
+        _calculator = calculator;
+    }
+
     public OrderPrice Calculate(decimal subtotal, decimal discount, decimal deliveryFee)
     {
         var taxableAmount = subtotal - discount;
 
         var tax = taxableAmount * 0.14m;
 
-        var total = taxableAmount + tax + deliveryFee;
+        var total = _calculator.CalculateTotal(subtotal, discount, tax, deliveryFee);
 
         return new OrderPrice(subtotal, discount, tax, deliveryFee, total);
     }
