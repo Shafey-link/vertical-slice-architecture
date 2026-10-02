@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using QuickBite.Api.Data;
 using QuickBite.Api.Domain;
-using QuickBite.Api.Entities;
+using QuickBite.Api.Infrastructure.Persistence;
 
 namespace QuickBite.Api.Features.Orders.PlaceOrder;
 

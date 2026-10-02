@@ -1,4 +1,4 @@
-namespace QuickBite.Api.Entities;
+namespace QuickBite.Api.Domain;
 
 public class Restaurant
 {

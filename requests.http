@@ -1,9 +1,11 @@
+### Place an order
 POST http://localhost:5080/api/orders
 Content-Type: application/json
 
 {
   "customerId": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
   "restaurantId": "11111111-1111-1111-1111-111111111111",
+  "couponCode": "SAVE10",
   "items": [
     {
       "menuItemId": "22222222-2222-2222-2222-222222222222",
@@ -12,3 +14,15 @@ Content-Type: application/json
     }
   ]
 }
+
+### Track an order (replace the id with the one returned above)
+GET http://localhost:5080/api/orders/00000000-0000-0000-0000-000000000000
+
+### Cancel an order
+POST http://localhost:5080/api/orders/00000000-0000-0000-0000-000000000000/cancel
+
+### Refund a cancelled order
+POST http://localhost:5080/api/payments/00000000-0000-0000-0000-000000000000/refund
+
+### Get a restaurant
+GET http://localhost:5080/api/restaurants/11111111-1111-1111-1111-111111111111
