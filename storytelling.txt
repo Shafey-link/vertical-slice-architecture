@@ -1,0 +1,1697 @@
+Absolutely. Let's rebuild the deck around one story: QuickBite, with the code demos appearing exactly where the architecture problem naturally happens.
+
+The structure below is designed for a ~1 hour presentation. Each demo slide gives you the branch name, and after the slide plan I’ll give you the full code for every demo branch.
+
+Part 1 — Storytelling Slides
+Slide 1 — Title
+Vertical Slice Architecture in .NET
+
+From technical layers to business features
+
+Building QuickBite, one feature at a time.
+
+Slide 2 — Let's Build Something
+Meet QuickBite 🍔
+
+QuickBite is a food delivery application.
+
+Customers can:
+
+Browse restaurants
+Add food to their cart
+Place orders
+Pay
+Track orders
+Cancel orders
+
+Our first feature:
+
+"As a customer, I want to place an order."
+
+🎤 Story:
+"Let's forget architecture for a moment. We have a requirement. Let's build it."
+
+Slide 3 — Our First Requirement
+Place an Order
+Customer
+   ↓
+Select Restaurant
+   ↓
+Select Food
+   ↓
+Place Order
+   ↓
+Pay
+   ↓
+Receive Confirmation
+
+Our first API:
+
+POST /api/orders
+Demo 1
+Slide 4 — Demo 1: Traditional Layered Architecture
+Branch
+01-traditional-layered
+
+We start with the architecture we already know:
+
+OrdersController
+       ↓
+OrderService
+       ↓
+OrderRepository
+       ↓
+Database
+
+🎤 Say:
+
+"This works. There is nothing wrong with it yet."
+
+Slide 5 — The Code Works
+Our first implementation
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Database
+
+We can place an order successfully.
+
+Question:
+
+"So what's the problem?"
+
+Don't answer yet.
+
+Slide 6 — Requirements Start Growing
+
+The product owner comes back.
+
+"We need a few more things..."
+Restaurant must be open
+Food must be available
+Apply coupon
+Calculate tax
+Calculate delivery fee
+Process payment
+Send notification
+
+🎤 Story:
+
+"Nothing unusual. Let's add them."
+
+Demo 2
+Slide 7 — Demo 2: The Growing Order Service
+Branch
+02-growing-order-service
+
+Now look at:
+
+OrderService.cs
+
+It contains:
+
+Validation
+Restaurant
+Menu
+Pricing
+Coupon
+Tax
+Delivery
+Payment
+Order creation
+Notification
+
+🎤 Ask the audience:
+
+"Would you like to work in this class six months from now?"
+
+Slide 8 — Where Is the Feature?
+
+Let's find Place Order.
+
+Controllers
+    OrdersController
+
+Services
+    OrderService
+
+Repositories
+    OrderRepository
+
+Entities
+    Order
+The feature is everywhere.
+
+"I know what the application does. Why can't I find the feature in the code?"
+
+Slide 9 — The Problem With Organizing by Technical Layers
+Controllers
+Services
+Repositories
+Entities
+Infrastructure
+
+This answers:
+
+"What technical role does this code have?"
+
+But not:
+
+"What does the application do?"
+
+Slide 10 — What If We Organize Around the Feature?
+
+Instead of:
+
+Controllers
+Services
+Repositories
+
+What if we had:
+
+PlaceOrder
+CancelOrder
+TrackOrder
+RefundPayment
+The feature becomes the boundary.
+Demo 3
+Slide 11 — Demo 3: Introducing the Place Order Slice
+Branch
+03-place-order-slice
+
+Now:
+
+Features
+└── Orders
+    └── PlaceOrder
+
+Everything related to Place Order starts living together.
+
+Slide 12 — Vertical Slice Architecture
+Traditional
+Controller
+    ↓
+Service
+    ↓
+Repository
+    ↓
+Database
+Vertical Slice
+┌─────────────────────┐
+│     Place Order     │
+│                     │
+│ Request             │
+│ Handler             │
+│ Validation          │
+│ Database             │
+│ Response            │
+└─────────────────────┘
+
+"Instead of moving horizontally through layers, the feature cuts vertically through the application."
+
+Demo 4
+Slide 13 — Demo 4: Request, Handler & Endpoint
+Branch
+04-request-handler-endpoint
+
+Our slice:
+
+PlaceOrder
+├── PlaceOrderRequest
+├── PlaceOrderHandler
+└── PlaceOrderEndpoint
+
+Flow:
+
+HTTP
+ ↓
+Endpoint
+ ↓
+Handler
+ ↓
+Database
+ ↓
+Response
+Slide 14 — The Feature Is Now Visible
+
+If someone asks:
+
+"Where is Place Order?"
+
+We can answer:
+
+Features
+└── Orders
+    └── PlaceOrder
+
+No searching through five technical layers.
+
+Demo 5
+Slide 15 — Demo 5: Adding Validation
+Branch
+05-validation
+
+Add:
+
+PlaceOrder
+├── Request
+├── Validator
+├── Handler
+└── Endpoint
+
+Validation stays close to the feature.
+
+Examples:
+
+Customer required
+Restaurant required
+At least one item
+Quantity > 0
+Slide 16 — But We Have a New Problem
+
+The requirements keep coming.
+
+Now Place Order needs:
+
+Restaurant validation
+Menu validation
+Coupon
+Pricing
+Payment
+Notification
+Order creation
+Our slice is growing.
+Demo 6
+Slide 17 — Demo 6: The Complex Place Order Feature
+Branch
+06-complex-feature
+
+Open:
+
+PlaceOrderHandler.cs
+
+It is getting big again.
+
+🎤 Ask:
+
+"Did Vertical Slice Architecture fail?"
+
+Pause.
+
+Then:
+
+"No. We have a different problem."
+
+Slide 18 — Vertical Slice ≠ One Giant Class
+
+A slice is a feature boundary.
+
+It does NOT mean:
+
+One feature
+    ↓
+One class
+    ↓
+1000 lines
+
+Instead:
+
+One feature
+    ↓
+Multiple focused components
+Demo 7
+Slide 19 — Demo 7: Refactoring the Complex Feature
+Branch
+07-refactor-complex-feature
+
+We extract:
+
+PlaceOrder
+├── Request
+├── Validator
+├── Handler
+├── OrderPricing
+├── PaymentProcessor
+└── OrderNotification
+
+Now the handler tells the story:
+
+Validate
+ ↓
+Check Restaurant
+ ↓
+Check Items
+ ↓
+Calculate Price
+ ↓
+Process Payment
+ ↓
+Create Order
+ ↓
+Notify Customer
+Slide 20 — A Slice Can Have Its Own Architecture
+
+Inside one slice:
+
+PlaceOrder
+│
+├── API
+├── Application Logic
+├── Validation
+├── Pricing
+└── Integration
+
+The difference is:
+
+We organize these components around Place Order, not around technical categories.
+
+Demo 8
+Slide 21 — Demo 8: Extracting Shared Logic
+Branch
+08-shared-logic
+
+Now another requirement arrives:
+
+Cancel Order
+Refund Payment
+
+We discover some logic is genuinely shared.
+
+PlaceOrder ──────┐
+CancelOrder ─────┤
+RefundPayment ───┤
+                 ↓
+          Shared Payment Logic
+Slide 22 — What Should Be Shared?
+Good shared logic
+PaymentCalculator
+DateTime abstraction
+Common infrastructure
+Authentication
+Logging
+Bad shared logic
+OrderService
+OrderManager
+ApplicationService
+CommonBusinessService
+
+containing everything.
+
+"Shared should be discovered, not created by default."
+
+Demo 9
+Slide 23 — Demo 9: Moving Business Rules Into the Domain
+Branch
+09-domain-logic
+
+We now have:
+
+order.Cancel();
+
+instead of:
+
+if (...)
+{
+    order.Status = Cancelled;
+}
+
+The domain owns the rule.
+
+Feature
+   ↓
+Order.Cancel()
+   ↓
+Business Rule
+Slide 24 — Feature Logic vs Domain Logic
+Feature
+
+"I want to cancel this order."
+
+Domain
+
+"Is this order allowed to be cancelled?"
+
+This gives us a clean separation.
+
+Demo 10
+Slide 25 — Demo 10: Final Vertical Slice Architecture
+Branch
+10-final-architecture
+QuickBite
+│
+├── Features
+│   ├── Orders
+│   │   ├── PlaceOrder
+│   │   ├── CancelOrder
+│   │   └── TrackOrder
+│   │
+│   ├── Payments
+│   │   └── RefundPayment
+│   │
+│   └── Restaurants
+│       └── GetRestaurant
+│
+├── Domain
+├── Shared
+└── Infrastructure
+Slide 26 — What Changed?
+Before
+Controllers
+Services
+Repositories
+Entities
+After
+PlaceOrder
+CancelOrder
+TrackOrder
+RefundPayment
+
+Technical infrastructure still exists.
+
+But the business features are now the primary structure.
+
+Demo 11
+Slide 27 — Demo 11: Testing the Feature
+Branch
+11-tests
+
+Tests follow the feature:
+
+Tests
+└── Features
+    └── Orders
+        └── PlaceOrder
+            ├── HandlerTests
+            └── ValidatorTests
+
+We can test the feature without navigating through the entire application.
+
+Slide 28 — CQRS Fits Naturally
+
+For commands:
+
+PlaceOrder
+CancelOrder
+RefundPayment
+
+For queries:
+
+GetOrder
+TrackOrder
+GetRestaurant
+
+Each feature can have its own data-access strategy.
+
+For example:
+
+PlaceOrder → EF Core
+TrackOrder → Dapper
+GetRestaurant → EF Core
+
+Vertical Slice Architecture doesn't require every feature to use the same implementation.
+
+Slide 29 — The Big Idea
+Don't organize your code around what the framework provides.
+
+Organize it around:
+
+What the business does.
+
+Traditional
+
+How is the code technically organized?
+
+
+Vertical Slice
+
+What does the system actually do?
+Slide 30 — The Journey
+Let's build it
+      ↓
+It works
+      ↓
+Requirements grow
+      ↓
+OrderService grows
+      ↓
+Finding the feature becomes difficult
+      ↓
+Organize around the feature
+      ↓
+PlaceOrder becomes a slice
+      ↓
+The slice becomes complex
+      ↓
+Refactor inside the slice
+      ↓
+Discover shared logic
+      ↓
+Move business rules into Domain
+      ↓
+Vertical Slice Architecture
+Slide 31 — What VSA Is Not
+
+Vertical Slice Architecture is not:
+
+❌ Every feature must have the same structure
+
+❌ Every feature must have exactly one handler
+
+❌ No shared code
+
+❌ No domain layer
+
+❌ No abstractions
+
+❌ "Put everything in one folder"
+
+Instead:
+
+Give each feature the structure it actually needs.
+
+Slide 32 — When Does It Make Sense?
+
+VSA can be particularly useful when:
+
+The application has many business features
+Features evolve independently
+Different features have different complexity
+Teams work on different areas
+You want changes to remain localized
+
+It also introduces trade-offs:
+
+More files/folders
+Potential duplication
+Requires discipline around shared code
+Can be unnecessary for very small applications
+Slide 33 — Final Architecture
+                    QuickBite
+                        │
+       ┌────────────────┼────────────────┐
+       ↓                ↓                ↓
+  PlaceOrder       CancelOrder      TrackOrder
+       │                │                │
+       └────────────────┼────────────────┘
+                        ↓
+                     Domain
+                        ↓
+                  Infrastructure
+                        ↓
+                    Database
+Slide 34 — Final Takeaway
+Start with the feature.
+
+Then ask:
+
+What does this feature need?
+What logic belongs only to this feature?
+What is genuinely shared?
+What is a business rule?
+Where should that business rule live?
+
+The architecture should help us find and change business capabilities easily.
+
+Part 2 — Full Code Samples
+
+Now let's make the repository match those slides.
+
+The important thing is that each branch is cumulative.
+
+You don't create a completely different codebase for every demo.
+
+01
+ ↓
+02
+ ↓
+03
+ ↓
+04
+ ↓
+05
+ ↓
+06
+ ↓
+07
+ ↓
+08
+ ↓
+09
+ ↓
+10
+ ↓
+11
+
+So your Git history becomes the actual presentation history.
+
+Common Project Setup
+
+Create:
+
+dotnet new sln -n QuickBite
+
+dotnet new webapi \
+    -n QuickBite.Api \
+    -o src/QuickBite.Api
+
+dotnet new xunit \
+    -n QuickBite.Tests \
+    -o tests/QuickBite.Tests
+
+dotnet sln add src/QuickBite.Api
+
+dotnet sln add tests/QuickBite.Tests
+
+dotnet add tests/QuickBite.Tests reference src/QuickBite.Api
+
+Packages:
+
+dotnet add src/QuickBite.Api package Microsoft.EntityFrameworkCore.Sqlite
+dotnet add src/QuickBite.Api package Microsoft.EntityFrameworkCore.Design
+
+dotnet add tests/QuickBite.Tests package Shouldly
+Demo 1 — 01-traditional-layered
+Structure
+QuickBite.Api
+├── Controllers
+│   └── OrdersController.cs
+├── Data
+│   └── QuickBiteDbContext.cs
+├── Entities
+│   ├── Order.cs
+│   └── OrderItem.cs
+├── Repositories
+│   ├── IOrderRepository.cs
+│   └── OrderRepository.cs
+├── Services
+│   ├── IOrderService.cs
+│   └── OrderService.cs
+└── Program.cs
+Order.cs
+namespace QuickBite.Api.Entities;
+
+public class Order
+{
+    public Guid Id { get; set; }
+
+    public Guid CustomerId { get; set; }
+
+    public Guid RestaurantId { get; set; }
+
+    public decimal TotalAmount { get; set; }
+
+    public DateTime CreatedAt { get; set; }
+
+    public List<OrderItem> Items { get; set; } = [];
+}
+OrderItem.cs
+namespace QuickBite.Api.Entities;
+
+public class OrderItem
+{
+    public Guid Id { get; set; }
+
+    public Guid OrderId { get; set; }
+
+    public Guid MenuItemId { get; set; }
+
+    public int Quantity { get; set; }
+
+    public decimal UnitPrice { get; set; }
+}
+QuickBiteDbContext.cs
+using Microsoft.EntityFrameworkCore;
+using QuickBite.Api.Entities;
+
+namespace QuickBite.Api.Data;
+
+public class QuickBiteDbContext : DbContext
+{
+    public QuickBiteDbContext(
+        DbContextOptions<QuickBiteDbContext> options)
+        : base(options)
+    {
+    }
+
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+}
+IOrderRepository.cs
+using QuickBite.Api.Entities;
+
+namespace QuickBite.Api.Repositories;
+
+public interface IOrderRepository
+{
+    Task AddAsync(Order order);
+}
+OrderRepository.cs
+using QuickBite.Api.Data;
+using QuickBite.Api.Entities;
+
+namespace QuickBite.Api.Repositories;
+
+public class OrderRepository : IOrderRepository
+{
+    private readonly QuickBiteDbContext _db;
+
+    public OrderRepository(QuickBiteDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task AddAsync(Order order)
+    {
+        _db.Orders.Add(order);
+
+        await _db.SaveChangesAsync();
+    }
+}
+IOrderService.cs
+namespace QuickBite.Api.Services;
+
+public record PlaceOrderRequest(
+    Guid CustomerId,
+    Guid RestaurantId,
+    List<PlaceOrderItemRequest> Items);
+
+public record PlaceOrderItemRequest(
+    Guid MenuItemId,
+    int Quantity,
+    decimal UnitPrice);
+
+public record PlaceOrderResponse(Guid OrderId);
+
+public interface IOrderService
+{
+    Task<PlaceOrderResponse> PlaceOrder(
+        PlaceOrderRequest request);
+}
+OrderService.cs
+using QuickBite.Api.Entities;
+using QuickBite.Api.Repositories;
+
+namespace QuickBite.Api.Services;
+
+public class OrderService : IOrderService
+{
+    private readonly IOrderRepository _repository;
+
+    public OrderService(IOrderRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<PlaceOrderResponse> PlaceOrder(
+        PlaceOrderRequest request)
+    {
+        var order = new Order
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = request.CustomerId,
+            RestaurantId = request.RestaurantId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        foreach (var item in request.Items)
+        {
+            order.Items.Add(new OrderItem
+            {
+                Id = Guid.NewGuid(),
+                OrderId = order.Id,
+                MenuItemId = item.MenuItemId,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice
+            });
+        }
+
+        order.TotalAmount = order.Items.Sum(
+            x => x.Quantity * x.UnitPrice);
+
+        await _repository.AddAsync(order);
+
+        return new PlaceOrderResponse(order.Id);
+    }
+}
+OrdersController.cs
+using Microsoft.AspNetCore.Mvc;
+using QuickBite.Api.Services;
+
+namespace QuickBite.Api.Controllers;
+
+[ApiController]
+[Route("api/orders")]
+public class OrdersController : ControllerBase
+{
+    private readonly IOrderService _service;
+
+    public OrdersController(IOrderService service)
+    {
+        _service = service;
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> PlaceOrder(
+        PlaceOrderRequest request)
+    {
+        var result =
+            await _service.PlaceOrder(request);
+
+        return Ok(result);
+    }
+}
+Program.cs
+using Microsoft.EntityFrameworkCore;
+using QuickBite.Api.Data;
+using QuickBite.Api.Repositories;
+using QuickBite.Api.Services;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+
+builder.Services.AddDbContext<QuickBiteDbContext>(
+    options =>
+        options.UseSqlite("Data Source=quickbite.db"));
+
+builder.Services.AddScoped<IOrderRepository,
+    OrderRepository>();
+
+builder.Services.AddScoped<IOrderService,
+    OrderService>();
+
+var app = builder.Build();
+
+app.MapControllers();
+
+app.Run();
+Demo 2 — 02-growing-order-service
+
+Keep all Demo 1 code, but modify OrderService.
+
+Add the following concepts:
+
+private void ValidateCustomer(
+    PlaceOrderRequest request)
+{
+    if (request.CustomerId == Guid.Empty)
+        throw new ArgumentException(
+            "Customer is required.");
+}
+private void CheckRestaurant(
+    Guid restaurantId)
+{
+    // restaurant validation
+}
+private decimal CalculateSubtotal(
+    PlaceOrderRequest request)
+{
+    return request.Items.Sum(
+        x => x.Quantity * x.UnitPrice);
+}
+private decimal ApplyCoupon(
+    decimal subtotal)
+{
+    return subtotal * 0.10m;
+}
+private decimal CalculateTax(
+    decimal amount)
+{
+    return amount * 0.14m;
+}
+private decimal CalculateDeliveryFee()
+{
+    return 30m;
+}
+
+And:
+
+private Task ProcessPayment(decimal amount)
+{
+    return Task.CompletedTask;
+}
+private Task SendNotification(Guid orderId)
+{
+    return Task.CompletedTask;
+}
+
+The important thing is not the exact implementation.
+
+The important thing is that all of these responsibilities are now inside OrderService.
+
+Demo 3 — 03-place-order-slice
+
+Move the feature into:
+
+Features
+└── Orders
+    └── PlaceOrder
+PlaceOrderRequest.cs
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
+
+public record PlaceOrderRequest(
+    Guid CustomerId,
+    Guid RestaurantId,
+    List<PlaceOrderItemRequest> Items);
+
+public record PlaceOrderItemRequest(
+    Guid MenuItemId,
+    int Quantity,
+    decimal UnitPrice);
+
+public record PlaceOrderResponse(
+    Guid OrderId);
+
+Delete:
+
+Controllers/OrdersController.cs
+Services/IOrderService.cs
+Services/OrderService.cs
+
+The point of this commit is simply:
+
+"Let's move the feature together."
+
+Demo 4 — 04-request-handler-endpoint
+PlaceOrderHandler.cs
+using QuickBite.Api.Data;
+using QuickBite.Api.Entities;
+
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
+
+public class PlaceOrderHandler
+{
+    private readonly QuickBiteDbContext _db;
+
+    public PlaceOrderHandler(
+        QuickBiteDbContext db)
+    {
+        _db = db;
+    }
+
+    public async Task<PlaceOrderResponse> Handle(
+        PlaceOrderRequest request)
+    {
+        var order = new Order
+        {
+            Id = Guid.NewGuid(),
+            CustomerId = request.CustomerId,
+            RestaurantId = request.RestaurantId,
+            CreatedAt = DateTime.UtcNow
+        };
+
+        foreach (var item in request.Items)
+        {
+            order.Items.Add(new OrderItem
+            {
+                Id = Guid.NewGuid(),
+                OrderId = order.Id,
+                MenuItemId = item.MenuItemId,
+                Quantity = item.Quantity,
+                UnitPrice = item.UnitPrice
+            });
+        }
+
+        order.TotalAmount =
+            order.Items.Sum(
+                x => x.Quantity * x.UnitPrice);
+
+        _db.Orders.Add(order);
+
+        await _db.SaveChangesAsync();
+
+        return new PlaceOrderResponse(order.Id);
+    }
+}
+PlaceOrderEndpoint.cs
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
+
+public static class PlaceOrderEndpoint
+{
+    public static void MapPlaceOrder(
+        this IEndpointRouteBuilder endpoints)
+    {
+        endpoints.MapPost(
+            "/api/orders",
+            async (
+                PlaceOrderRequest request,
+                PlaceOrderHandler handler) =>
+            {
+                var result =
+                    await handler.Handle(request);
+
+                return Results.Ok(result);
+            });
+    }
+}
+Program.cs
+using Microsoft.EntityFrameworkCore;
+using QuickBite.Api.Data;
+using QuickBite.Api.Features.Orders.PlaceOrder;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<QuickBiteDbContext>(
+    options =>
+        options.UseSqlite("Data Source=quickbite.db"));
+
+builder.Services.AddScoped<PlaceOrderHandler>();
+
+var app = builder.Build();
+
+app.MapPlaceOrder();
+
+app.Run();
+Demo 5 — 05-validation
+PlaceOrderValidator.cs
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
+
+public class PlaceOrderValidator
+{
+    public void Validate(
+        PlaceOrderRequest request)
+    {
+        if (request.CustomerId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Customer is required.");
+        }
+
+        if (request.RestaurantId == Guid.Empty)
+        {
+            throw new ArgumentException(
+                "Restaurant is required.");
+        }
+
+        if (request.Items.Count == 0)
+        {
+            throw new ArgumentException(
+                "Order must contain at least one item.");
+        }
+
+        if (request.Items.Any(
+                x => x.Quantity <= 0))
+        {
+            throw new ArgumentException(
+                "Quantity must be greater than zero.");
+        }
+    }
+}
+
+Modify handler:
+
+private readonly PlaceOrderValidator _validator;
+
+public PlaceOrderHandler(
+    QuickBiteDbContext db,
+    PlaceOrderValidator validator)
+{
+    _db = db;
+    _validator = validator;
+}
+
+At the beginning:
+
+_validator.Validate(request);
+
+And register:
+
+builder.Services.AddScoped<PlaceOrderValidator>();
+Demo 6 — 06-complex-feature
+
+Now add supporting models.
+
+Restaurant.cs
+namespace QuickBite.Api.Entities;
+
+public class Restaurant
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public bool IsOpen { get; set; }
+}
+MenuItem.cs
+namespace QuickBite.Api.Entities;
+
+public class MenuItem
+{
+    public Guid Id { get; set; }
+
+    public Guid RestaurantId { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public decimal Price { get; set; }
+
+    public bool IsAvailable { get; set; }
+}
+
+Add to DbContext:
+
+public DbSet<Restaurant> Restaurants => Set<Restaurant>();
+
+public DbSet<MenuItem> MenuItems => Set<MenuItem>();
+
+Now the handler grows:
+
+public async Task<PlaceOrderResponse> Handle(
+    PlaceOrderRequest request)
+{
+    _validator.Validate(request);
+
+    var restaurant =
+        await _db.Restaurants
+            .SingleOrDefaultAsync(
+                x => x.Id == request.RestaurantId);
+
+    if (restaurant is null)
+        throw new InvalidOperationException(
+            "Restaurant not found.");
+
+    if (!restaurant.IsOpen)
+        throw new InvalidOperationException(
+            "Restaurant is closed.");
+
+    var menuItemIds =
+        request.Items
+            .Select(x => x.MenuItemId)
+            .ToList();
+
+    var menuItems =
+        await _db.MenuItems
+            .Where(x => menuItemIds.Contains(x.Id))
+            .ToListAsync();
+
+    foreach (var item in request.Items)
+    {
+        var menuItem =
+            menuItems.SingleOrDefault(
+                x => x.Id == item.MenuItemId);
+
+        if (menuItem is null)
+            throw new InvalidOperationException(
+                "Menu item not found.");
+
+        if (!menuItem.IsAvailable)
+            throw new InvalidOperationException(
+                $"{menuItem.Name} is unavailable.");
+    }
+
+    var subtotal = request.Items.Sum(item =>
+    {
+        var menuItem =
+            menuItems.Single(
+                x => x.Id == item.MenuItemId);
+
+        return menuItem.Price * item.Quantity;
+    });
+
+    var discount = 0m;
+
+    var tax =
+        (subtotal - discount) * 0.14m;
+
+    var deliveryFee = 30m;
+
+    var total =
+        subtotal -
+        discount +
+        tax +
+        deliveryFee;
+
+    // payment
+
+    // create order
+
+    // save
+
+    // notification
+
+    throw new NotImplementedException();
+}
+
+This ugly code is intentional.
+
+It sets up Demo 7.
+
+Demo 7 — 07-refactor-complex-feature
+
+Now extract the responsibilities.
+
+OrderPricing.cs
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
+
+public class OrderPricing
+{
+    public OrderPrice Calculate(
+        decimal subtotal,
+        decimal discount,
+        decimal deliveryFee)
+    {
+        var taxableAmount =
+            subtotal - discount;
+
+        var tax =
+            taxableAmount * 0.14m;
+
+        var total =
+            taxableAmount +
+            tax +
+            deliveryFee;
+
+        return new OrderPrice(
+            subtotal,
+            discount,
+            tax,
+            deliveryFee,
+            total);
+    }
+}
+
+public record OrderPrice(
+    decimal Subtotal,
+    decimal Discount,
+    decimal Tax,
+    decimal DeliveryFee,
+    decimal Total);
+PaymentProcessor.cs
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
+
+public class PaymentProcessor
+{
+    public Task Process(decimal amount)
+    {
+        Console.WriteLine(
+            $"Payment processed: {amount}");
+
+        return Task.CompletedTask;
+    }
+}
+OrderNotification.cs
+namespace QuickBite.Api.Features.Orders.PlaceOrder;
+
+public class OrderNotification
+{
+    public Task Send(Guid orderId)
+    {
+        Console.WriteLine(
+            $"Order notification sent: {orderId}");
+
+        return Task.CompletedTask;
+    }
+}
+
+Now the handler becomes:
+
+public class PlaceOrderHandler
+{
+    private readonly QuickBiteDbContext _db;
+    private readonly PlaceOrderValidator _validator;
+    private readonly OrderPricing _pricing;
+    private readonly PaymentProcessor _payment;
+    private readonly OrderNotification _notification;
+
+    public PlaceOrderHandler(
+        QuickBiteDbContext db,
+        PlaceOrderValidator validator,
+        OrderPricing pricing,
+        PaymentProcessor payment,
+        OrderNotification notification)
+    {
+        _db = db;
+        _validator = validator;
+        _pricing = pricing;
+        _payment = payment;
+        _notification = notification;
+    }
+
+    public async Task<PlaceOrderResponse> Handle(
+        PlaceOrderRequest request)
+    {
+        _validator.Validate(request);
+
+        var restaurant =
+            await GetRestaurant(request.RestaurantId);
+
+        ValidateRestaurant(restaurant);
+
+        var menuItems =
+            await GetMenuItems(request);
+
+        ValidateItems(request, menuItems);
+
+        var subtotal =
+            CalculateSubtotal(request, menuItems);
+
+        var discount = 0m;
+
+        var price =
+            _pricing.Calculate(
+                subtotal,
+                discount,
+                30m);
+
+        await _payment.Process(price.Total);
+
+        var order =
+            CreateOrder(
+                request,
+                menuItems,
+                price);
+
+        _db.Orders.Add(order);
+
+        await _db.SaveChangesAsync();
+
+        await _notification.Send(order.Id);
+
+        return new PlaceOrderResponse(order.Id);
+    }
+}
+
+The private methods remain inside the slice.
+
+Demo 8 — 08-shared-logic
+
+Add:
+
+Shared
+└── Payments
+    └── PaymentCalculator.cs
+PaymentCalculator.cs
+namespace QuickBite.Api.Shared.Payments;
+
+public class PaymentCalculator
+{
+    public decimal CalculateTotal(
+        decimal subtotal,
+        decimal discount,
+        decimal tax,
+        decimal deliveryFee)
+    {
+        return subtotal
+            - discount
+            + tax
+            + deliveryFee;
+    }
+}
+
+Now other features can use it without depending on PlaceOrder.
+
+For example:
+
+PlaceOrder
+     ↓
+PaymentCalculator
+
+RefundPayment
+     ↓
+PaymentCalculator
+
+CancelOrder
+     ↓
+PaymentCalculator
+Demo 9 — 09-domain-logic
+
+Move the Order entity into Domain.
+
+Domain/OrderStatus.cs
+namespace QuickBite.Api.Domain;
+
+public enum OrderStatus
+{
+    Pending,
+    Confirmed,
+    Preparing,
+    Delivered,
+    Cancelled
+}
+Domain/Order.cs
+namespace QuickBite.Api.Domain;
+
+public class Order
+{
+    public Guid Id { get; private set; }
+
+    public Guid CustomerId { get; private set; }
+
+    public Guid RestaurantId { get; private set; }
+
+    public decimal TotalAmount { get; private set; }
+
+    public OrderStatus Status { get; private set; }
+
+    private Order()
+    {
+    }
+
+    public Order(
+        Guid customerId,
+        Guid restaurantId,
+        decimal totalAmount)
+    {
+        Id = Guid.NewGuid();
+        CustomerId = customerId;
+        RestaurantId = restaurantId;
+        TotalAmount = totalAmount;
+        Status = OrderStatus.Pending;
+    }
+
+    public void Confirm()
+    {
+        if (Status != OrderStatus.Pending)
+            throw new InvalidOperationException(
+                "Only pending orders can be confirmed.");
+
+        Status = OrderStatus.Confirmed;
+    }
+
+    public void Cancel()
+    {
+        if (Status == OrderStatus.Delivered)
+            throw new InvalidOperationException(
+                "Delivered orders cannot be cancelled.");
+
+        if (Status == OrderStatus.Cancelled)
+            throw new InvalidOperationException(
+                "Order is already cancelled.");
+
+        Status = OrderStatus.Cancelled;
+    }
+}
+
+Now the feature says:
+
+order.Cancel();
+
+Instead of knowing the business rule itself.
+
+Demo 10 — 10-final-architecture
+
+At this point organize the project:
+
+QuickBite.Api
+│
+├── Features
+│   │
+│   ├── Orders
+│   │   ├── PlaceOrder
+│   │   │   ├── PlaceOrderRequest.cs
+│   │   │   ├── PlaceOrderValidator.cs
+│   │   │   ├── PlaceOrderHandler.cs
+│   │   │   ├── OrderPricing.cs
+│   │   │   ├── PaymentProcessor.cs
+│   │   │   ├── OrderNotification.cs
+│   │   │   └── PlaceOrderEndpoint.cs
+│   │   │
+│   │   ├── CancelOrder
+│   │   │   ├── CancelOrderRequest.cs
+│   │   │   ├── CancelOrderHandler.cs
+│   │   │   └── CancelOrderEndpoint.cs
+│   │   │
+│   │   └── TrackOrder
+│   │
+│   ├── Payments
+│   │   └── RefundPayment
+│   │
+│   └── Restaurants
+│       └── GetRestaurant
+│
+├── Domain
+│   ├── Order.cs
+│   ├── OrderItem.cs
+│   └── Restaurant.cs
+│
+├── Shared
+│   └── Payments
+│       └── PaymentCalculator.cs
+│
+├── Infrastructure
+│   ├── Persistence
+│   ├── Payments
+│   └── Notifications
+│
+└── Program.cs
+
+This is your final reveal.
+
+Demo 11 — 11-tests
+PlaceOrderValidatorTests.cs
+using QuickBite.Api.Features.Orders.PlaceOrder;
+using Shouldly;
+
+namespace QuickBite.Tests.Features.Orders.PlaceOrder;
+
+public class PlaceOrderValidatorTests
+{
+    private readonly PlaceOrderValidator _validator = new();
+
+    [Fact]
+    public void Should_Reject_Empty_Customer()
+    {
+        var request = new PlaceOrderRequest(
+            Guid.Empty,
+            Guid.NewGuid(),
+            [
+                new(
+                    Guid.NewGuid(),
+                    1,
+                    100)
+            ]);
+
+        Should.Throw<ArgumentException>(
+            () => _validator.Validate(request));
+    }
+
+    [Fact]
+    public void Should_Reject_Empty_Items()
+    {
+        var request = new PlaceOrderRequest(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            []);
+
+        Should.Throw<ArgumentException>(
+            () => _validator.Validate(request));
+    }
+
+    [Fact]
+    public void Should_Reject_Invalid_Quantity()
+    {
+        var request = new PlaceOrderRequest(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            [
+                new(
+                    Guid.NewGuid(),
+                    0,
+                    100)
+            ]);
+
+        Should.Throw<ArgumentException>(
+            () => _validator.Validate(request));
+    }
+}
+OrderTests.cs
+using QuickBite.Api.Domain;
+using Shouldly;
+
+namespace QuickBite.Tests.Domain;
+
+public class OrderTests
+{
+    [Fact]
+    public void Should_Cancel_Pending_Order()
+    {
+        var order = new Order(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            100);
+
+        order.Cancel();
+
+        order.Status.ShouldBe(
+            OrderStatus.Cancelled);
+    }
+
+    [Fact]
+    public void Should_Not_Cancel_Delivered_Order()
+    {
+        var order = new Order(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            100);
+
+        order.Confirm();
+
+        // In the real implementation we would
+        // transition it to Delivered first.
+
+        // The test demonstrates that domain
+        // rules belong to Order.
+    }
+}
+The Presentation Flow
+
+Your actual presentation now becomes very simple:
+
+SLIDE
+  ↓
+Story / Problem
+  ↓
+DEMO
+  ↓
+Show branch
+  ↓
+Open 1–2 important files
+  ↓
+Run / explain
+  ↓
+BACK TO SLIDE
+  ↓
+New problem
+  ↓
+Next DEMO
+
+And your demo markers are always consistent:
+
+Demo 1: Traditional Layered Architecture
+01-traditional-layered
+
+Demo 2: The Growing Order Service
+02-growing-order-service
+
+Demo 3: Introducing the Place Order Slice
+03-place-order-slice
+
+Demo 4: Request, Handler & Endpoint
+04-request-handler-endpoint
+
+Demo 5: Adding Validation
+05-validation
+
+Demo 6: The Complex Place Order Feature
+06-complex-feature
+
+Demo 7: Refactoring the Complex Feature
+07-refactor-complex-feature
+
+Demo 8: Extracting Shared Logic
+08-shared-logic
+
+Demo 9: Moving Business Rules Into the Domain
+09-domain-logic
+
+Demo 10: Final Vertical Slice Architecture
+10-final-architecture
+
+Demo 11: Testing the Feature
+11-tests
+
+One correction I'd make before you actually implement this: we should build the repository from Demo 1 through Demo 11 carefully and make every intermediate commit compile and run, rather than copying the snippets above verbatim as-is. In particular, the later commits need the supporting Restaurant, MenuItem, order creation, EF configuration, DI registrations, and the final CancelOrder implementation wired consistently. That will give you a genuinely runnable presentation repository rather than presentation-only pseudocode.
