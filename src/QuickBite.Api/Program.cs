@@ -17,6 +17,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<QuickBiteDbContext>();
     db.Database.EnsureDeleted();
     db.Database.EnsureCreated();
+    db.Seed();
 }
 
 app.MapPlaceOrder();

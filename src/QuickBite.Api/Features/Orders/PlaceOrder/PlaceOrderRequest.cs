@@ -3,7 +3,8 @@ namespace QuickBite.Api.Features.Orders.PlaceOrder;
 public record PlaceOrderRequest(
     Guid CustomerId,
     Guid RestaurantId,
-    List<PlaceOrderItemRequest> Items);
+    List<PlaceOrderItemRequest> Items,
+    string? CouponCode = null);
 
 public record PlaceOrderItemRequest(
     Guid MenuItemId,
